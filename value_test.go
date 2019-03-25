@@ -23,6 +23,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/dgraph-io/badger/options"
 	"github.com/dgraph-io/badger/y"
@@ -402,6 +403,7 @@ func TestValueGC4(t *testing.T) {
 	err = kv.vlog.Close()
 	require.NoError(t, err)
 
+	time.Sleep(3 * time.Second)
 	err = kv.vlog.open(kv, valuePointer{Fid: 2}, kv.replayFunction())
 	require.NoError(t, err)
 

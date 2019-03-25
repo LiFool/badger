@@ -999,7 +999,9 @@ func (vlog *valueLog) write(reqs []*request) error {
 		return err
 	}
 
-	return fileRotationError
+	vlog.db.Lock()
+	defer vlog.db.Unlock()
+	return vlog.db.sendMemtableFlushTaskToChan()
 }
 
 // Gets the logFile and acquires and RLock() for the mmap. You must call RUnlock on the file

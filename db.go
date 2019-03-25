@@ -21,6 +21,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"expvar"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -583,6 +584,7 @@ func (db *DB) writeRequests(reqs []*request) error {
 	if len(reqs) == 0 {
 		return nil
 	}
+	fmt.Printf("got %d requests to write\n", len(reqs))
 
 	done := func(err error) {
 		for _, r := range reqs {
@@ -633,12 +635,14 @@ func (db *DB) writeRequests(reqs []*request) error {
 	db.elog.Printf("%d entries written", count)
 
 	// Persist latest value of value log head
+	// valueLogFileRotated = false // HACK HACK HACK
+	fmt.Printf("%d entries written. Rotated: %v\n", count, valueLogFileRotated)
 	if valueLogFileRotated {
-		db.Lock()
-		defer db.Unlock()
-		if err := db.sendMemtableFlushTaskToChan(); err != nil {
-			return err
-		}
+		// db.Lock()
+		// defer db.Unlock()
+		// if err := db.sendMemtableFlushTaskToChan(); err != nil {
+		// 	return err
+		// }
 	}
 
 	return nil
@@ -831,6 +835,10 @@ type flushTask struct {
 
 // handleFlushTask must be run serially.
 func (db *DB) handleFlushTask(ft flushTask) error {
+	fmt.Printf("is ft.mt empty? %v\n", ft.mt.Empty())
+	if ft.mt.Empty() {
+		return nil
+	}
 	if !ft.mt.Empty() {
 		// Store badger head even if vptr is zero, need it for readTs
 		db.opt.Debugf("Storing value log head: %+v\n", ft.vptr)
